@@ -1,6 +1,9 @@
 package project;
 
+import javax.swing.tree.TreeModel;
+
 public aspect Visualization {
+
 
 
     // TODO LexicographicTree
@@ -15,4 +18,8 @@ public aspect Visualization {
 
     // TODO Node
     // add reference to JTree element
+
+    declare parents : tree.LexicographicTree implements TreeModel;
+
+    declare parents : tree.AbstractNode implements TreeNode;
 }
