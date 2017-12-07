@@ -1,6 +1,10 @@
 package tree;
 
 public class Node extends AbstractNode {
+
+	// TODO
+	// add reference to JTree element
+
 	private char value;
 	private AbstractNode child;
 

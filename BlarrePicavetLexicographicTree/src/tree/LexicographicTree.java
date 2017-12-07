@@ -2,6 +2,12 @@ package tree;
 
 public class LexicographicTree {
 
+	// TODO
+	// add pointcut on initialization
+		// add reference to a new JTree
+	// add pointcut on editions
+		// use reference inside node to report change
+
 	private AbstractNode root;
 
 	public LexicographicTree() {
