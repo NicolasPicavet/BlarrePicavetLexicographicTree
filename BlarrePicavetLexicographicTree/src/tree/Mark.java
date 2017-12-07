@@ -2,9 +2,6 @@ package tree;
 
 public class Mark extends AbstractNode {
 
-	// TODO
-	// in JTree if brother exists then brother is child of this Mark parent
-
 	public Mark(AbstractNode brother) {
 		super(brother);
 	}
