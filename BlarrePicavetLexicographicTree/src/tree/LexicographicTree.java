@@ -47,13 +47,9 @@ public class LexicographicTree {
 	}
 
 	public static void main(String[] args) {
-		JFrame frame = new JFrame("Arbre Lexicographic");
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-		frame.setContentPane(MainWindow.getInstance().getView());
-
-		frame.pack();
-		frame.setVisible(true);
+		MainWindow mainWindow = new MainWindow("Arbre Lexicographic");
+		mainWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		mainWindow.setVisible(true);
 	}
 
 }
