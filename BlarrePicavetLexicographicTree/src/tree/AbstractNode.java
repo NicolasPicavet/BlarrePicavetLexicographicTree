@@ -47,7 +47,8 @@ public abstract class AbstractNode {
 		System.out.println("--->" + tree.toString() + "<---");
 		System.out.println(tree.elementsCount());
 		
-
+		tree.save(System.getProperty("user.dir")+"/"+"test.txt");
+		
 	}
 
 }

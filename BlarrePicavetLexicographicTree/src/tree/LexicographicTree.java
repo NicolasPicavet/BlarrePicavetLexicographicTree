@@ -1,5 +1,9 @@
 package tree;
 
+import gui.MainWindow;
+
+import javax.swing.*;
+
 public class LexicographicTree {
 
 	private AbstractNode root;
@@ -43,8 +47,13 @@ public class LexicographicTree {
 	}
 
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+		JFrame frame = new JFrame("Arbre Lexicographic");
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+		frame.setContentPane(MainWindow.getInstance().getView());
+
+		frame.pack();
+		frame.setVisible(true);
 	}
 
 }

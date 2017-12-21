@@ -11,6 +11,7 @@ import java.io.Writer;
 
 import tree.LexicographicTree;
 
+
 public aspect Serialization {
 	
     declare parents : tree.LexicographicTree implements Serializable;

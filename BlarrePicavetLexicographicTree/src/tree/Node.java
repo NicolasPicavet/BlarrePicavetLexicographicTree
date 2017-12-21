@@ -84,9 +84,4 @@ public class Node extends AbstractNode {
 		return child.toString(s + value) + brother.toString(s);
 	}
 
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
-	}
-
 }
