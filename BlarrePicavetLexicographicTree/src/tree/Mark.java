@@ -42,9 +42,4 @@ public class Mark extends AbstractNode {
 		return s + "\n" + brother.toString(s);
 	}
 
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
-	}
-
 }

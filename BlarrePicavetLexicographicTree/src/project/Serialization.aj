@@ -1,11 +1,12 @@
 package project;
 
 import tree.LexicographicTree;
+import java.io.Serializable;
+
+import tree.*;
 
 public aspect Serialization {
     declare parents : tree.LexicographicTree.java implements Serializable;
-
-    private LexicographicTree instance = new LexicographicTree();
 
     void save(String filePath) {
         // TODO
