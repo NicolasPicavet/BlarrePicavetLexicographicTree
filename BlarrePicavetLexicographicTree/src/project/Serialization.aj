@@ -1,15 +1,8 @@
 package project;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Serializable;
-import java.io.Writer;
-
 import tree.LexicographicTree;
+
+import java.io.*;
 
 
 public aspect Serialization {
