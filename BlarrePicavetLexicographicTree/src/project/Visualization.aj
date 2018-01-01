@@ -124,11 +124,6 @@ privileged public aspect Visualization {
     }
 
     pointcut writeNodeChild(Node node, AbstractNode newChild) : set(private AbstractNode Node.child) && args(newChild) && target(node);
-    /*before(Node node, AbstractNode newChild) : writeNodeChild(node, newChild) {
-        System.out.println("Pointcut before Node.set.child");
-        if (node.treeNode.isNodeChild(newChild.treeNode))
-            node.treeNode.remove(newChild.treeNode);
-    }*/
     after(Node node, AbstractNode newChild) : writeNodeChild(node, newChild) {
         System.out.println("Pointcut after Node.set.child");
         node.treeNode.insert(newChild.treeNode, 0);
