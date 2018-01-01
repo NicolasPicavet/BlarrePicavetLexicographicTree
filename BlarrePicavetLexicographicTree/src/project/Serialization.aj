@@ -4,6 +4,7 @@ import tree.LexicographicTree;
 
 import java.io.*;
 
+import gui.MainWindow;
 
 public aspect Serialization {
 	
@@ -39,6 +40,10 @@ public aspect Serialization {
 		System.out.println("Loading tree from file : " + filePath);
 	
 		try {
+			
+			//@TODO: fix this bug, I cannot access the root node to re-init the Tree before loading
+//			root = new EmptyNode(); //re-init tree
+			MainWindow.getListModel().removeAllElements();//re-init JList for view
 
 			Reader reader = new BufferedReader(new FileReader(filePath));
 			int keepReading;
@@ -48,7 +53,11 @@ public aspect Serialization {
 			
 			String[] words = sb.toString().split("\n");
 			
-			for(String s:words) add(s);
+			for(String s:words) {
+				add(s);
+                MainWindow.getListModel().add(0, s);
+//				System.out.println("Adding from Serialization.aj "load" pointcut : " + s);
+			}
 			
 		}
 		catch(IOException e) {
