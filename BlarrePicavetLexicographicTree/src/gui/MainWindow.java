@@ -6,14 +6,8 @@ import com.intellij.uiDesigner.core.Spacer;
 import tree.LexicographicTree;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import javax.swing.JFileChooser;
+import java.awt.event.*;
 
 public class MainWindow extends JFrame {
 
@@ -67,13 +61,7 @@ public class MainWindow extends JFrame {
         addButton.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                String toAdd = inputText.getText();
-                if (lexicographicTree.add(toAdd)) {
-                    // TODO add to tree
-                    listModel.add(0, toAdd);
-                    statusText.setText("\"" + toAdd + "\" added");
-                } else
-                    statusText.setText("\"" + toAdd + "\" not added");
+                addText();
             }
         });
         deleteButton.addMouseListener(new MouseAdapter() {
@@ -81,7 +69,6 @@ public class MainWindow extends JFrame {
             public void mouseClicked(MouseEvent e) {
                 String toRemove = inputText.getText();
                 if (lexicographicTree.remove(toRemove)) {
-                    // TODO remove from tree
                     listModel.removeElement(toRemove);
                     statusText.setText("\"" + toRemove + "\" removed");
                 } else
@@ -108,9 +95,26 @@ public class MainWindow extends JFrame {
                     statusText.setText("\"" + toSearch + "\" not found");
             }
         });
+        inputText.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                if (e.getKeyChar() == e.VK_ENTER)
+                    addText();
+                super.keyTyped(e);
+            }
+        });
 
         loadMenuItem.addActionListener(new OpenFileListener());
         saveMenuItem.addActionListener(new SaveFileListener());
+    }
+
+    public void addText() {
+        String toAdd = inputText.getText();
+        if (lexicographicTree.add(toAdd)) {
+            listModel.add(0, toAdd);
+            statusText.setText("\"" + toAdd + "\" added");
+        } else
+            statusText.setText("\"" + toAdd + "\" not added");
     }
 
     {
@@ -203,7 +207,7 @@ public class MainWindow extends JFrame {
             JFileChooser c = new JFileChooser();
             int rVal = c.showSaveDialog(MainWindow.this);
             if (rVal == JFileChooser.APPROVE_OPTION) {
-                if(lexicographicTree.save(c.getCurrentDirectory().toString() + "/" + c.getSelectedFile().getName()))
+                if (lexicographicTree.save(c.getCurrentDirectory().toString() + "/" + c.getSelectedFile().getName()))
                     statusText.setText(c.getSelectedFile().getName() + " file saved");
             }
         }
