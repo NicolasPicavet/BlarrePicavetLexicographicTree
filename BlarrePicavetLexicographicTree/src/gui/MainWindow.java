@@ -50,7 +50,7 @@ public class MainWindow extends JFrame {
 
     private void init() {
         // Models
-        tree.setModel(lexicographicTree);
+        lexicographicTree.setView(tree);
         list.setModel(listModel);
 
         // Menu
@@ -105,10 +105,6 @@ public class MainWindow extends JFrame {
                     statusText.setText("\"" + toSearch + "\" not found");
             }
         });
-    }
-
-    public JTree getJTree() {
-        return tree;
     }
 
     {

@@ -3,6 +3,7 @@ package project;
 import gui.MainWindow;
 import tree.AbstractNode;
 import tree.LexicographicTree;
+import tree.Node;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelListener;
@@ -11,7 +12,7 @@ import java.util.Enumeration;
 
 privileged public aspect Visualization {
 
-    JTree jTree;
+    //JTree jTree;
 
     // TODO LexicographicTree
     // add pointcut on initialization
@@ -29,8 +30,16 @@ privileged public aspect Visualization {
 
     declare parents : tree.LexicographicTree implements TreeModel;
 
-    public Object LexicographicTree.getRoot() {
-        return root;
+    private DefaultTreeModel LexicographicTree.treeModel;
+
+    private JTree LexicographicTree.view;
+
+    public void LexicographicTree.setView(JTree jTree) {
+        view = jTree;
+    }
+
+    public DefaultMutableTreeNode LexicographicTree.getRoot() {
+        return root.treeNode;
     }
 
     public Object LexicographicTree.getChild(Object parent, int index) {
@@ -64,6 +73,8 @@ privileged public aspect Visualization {
     /* TREE NODE */
 
     declare parents : tree.AbstractNode implements TreeNode;
+
+    private DefaultMutableTreeNode AbstractNode.treeNode = new DefaultMutableTreeNode("default");
 
     public int AbstractNode.getChildCount() {
         return 0;
@@ -101,30 +112,55 @@ privileged public aspect Visualization {
         MainWindow mainWindow = new MainWindow("Arbre Lexicographic");
         mainWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainWindow.setVisible(true);
-
-        jTree = mainWindow.getJTree();
     }
 
     pointcut addNodePointcut(String s, LexicographicTree tree) : call(AbstractNode AbstractNode.add(String)) && args(s) && this(tree);
     after(String s, LexicographicTree tree) returning(AbstractNode node) : addNodePointcut(s, tree) {
         System.out.println("Pointcut LT.add: " + s);
-
-
-
-
-        /*DefaultTreeModel model = (DefaultTreeModel) tree;
-        DefaultMutableTreeNode root = (DefaultMutableTreeNode) model.getRoot();
-        root.add(new DefaultMutableTreeNode("another_child"));
-        model.reload(root);*/
     }
 
-    pointcut removePointcut(String s) : call(boolean LexicographicTree.remove(String)) && args(s);
-    after(String s) : removePointcut(s) {
-        System.out.println("Pointcut LT.remove: " + s);
-    }
-
-    /*pointcut constructorNode() : call(Node.new());
-    after() : constructorNode() {
-        //System.out.println("Pointcut call aspect LT.new");
+    /*pointcut constructorLexicographicTree() : call(public LexicographicTree.new());
+    after() returning(LexicographicTree tree) : constructorLexicographicTree() {
+        System.out.println("Pointcut LT.new");
+        tree.treeModel = new DefaultTreeModel(tree.getRoot());
+        tree.view.setModel(tree.treeModel);
     }*/
+
+    pointcut setViewPointcut(LexicographicTree tree) : call(void LexicographicTree.setView(JTree)) && target(tree);
+    after(LexicographicTree tree) : setViewPointcut(tree) {
+        System.out.println("Pointcut LT.set.view");
+        tree.treeModel = new DefaultTreeModel(tree.getRoot());
+        tree.view.setModel(tree.treeModel);
+    }
+
+    pointcut writeNodeValue(char newValue, Node node) : set(private char Node.value) && args(newValue) && target(node);
+    after(char newValue, Node node) : writeNodeValue(newValue, node) {
+        System.out.println("Pointcut Node.set.value: " + newValue);
+        node.treeNode = new DefaultMutableTreeNode(newValue);
+    }
+
+    /*pointcut writeNodeChild(Node node) : set(private AbstractNode Node.child) && args(AbstractNode) && target(node);
+    before(Node node) : writeNodeChild(node) {
+        System.out.println("Pointcut before Node.set.child");
+        node.treeNode.remove(node.child.treeNode);
+    }
+    after(Node node) : writeNodeChild(node) {
+        System.out.println("Pointcut after Node.set.child");
+        node.treeNode.add(node.child.treeNode);
+    }*/
+
+    pointcut writeAbstractNodeBrother(AbstractNode abstractNode) : set(protected AbstractNode AbstractNode.brother) && args(AbstractNode) && target(abstractNode);
+    before(AbstractNode abstractNode) : writeAbstractNodeBrother(abstractNode) {
+        System.out.println("Pointcut before AbstractNode.set.brother");
+        DefaultMutableTreeNode parent = (DefaultMutableTreeNode) abstractNode.treeNode.getParent();
+        if (abstractNode.brother != null)
+            parent.remove(abstractNode.brother.treeNode);
+    }
+    after(AbstractNode abstractNode) : writeAbstractNodeBrother(abstractNode) {
+        System.out.println("Pointcut after AbstractNode.set.brother");
+        DefaultMutableTreeNode parent = (DefaultMutableTreeNode) abstractNode.treeNode.getParent();
+        if (abstractNode.brother != null)
+            parent.add(abstractNode.brother.treeNode);
+    }
+
 }
