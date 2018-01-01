@@ -7,24 +7,13 @@ import tree.Node;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelListener;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.util.Enumeration;
 
-privileged public aspect Visualization {
-
-    //JTree jTree;
-
-    // TODO LexicographicTree
-    // add pointcut on initialization
-        // add reference to a new JTree
-    // add pointcut on editions
-        // use reference inside node to report change
-
-    // TODO Mark
-    // in JTree if brother exists then brother is child of this Mark parent
-
-    // TODO Node
-    // add reference to a JTree element
+public aspect Visualization {
 
     /* TREE MODEL */
 
@@ -36,72 +25,75 @@ privileged public aspect Visualization {
 
     public void LexicographicTree.setView(JTree jTree) {
         view = jTree;
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode("");
+        treeModel = new DefaultTreeModel(root);
+        view.setModel(treeModel);
     }
 
-    public DefaultMutableTreeNode LexicographicTree.getRoot() {
-        return root.treeNode;
+    public Object LexicographicTree.getRoot() {
+        return treeModel.getRoot();
     }
 
     public Object LexicographicTree.getChild(Object parent, int index) {
-        return null;
+        return treeModel.getChild(parent, index);
     }
 
     public int LexicographicTree.getChildCount(Object parent) {
-        return 0;
+        return treeModel.getChildCount(parent);
     }
 
     public boolean LexicographicTree.isLeaf(Object node) {
-        return false;
+        return treeModel.isLeaf(node);
     }
 
     public void LexicographicTree.valueForPathChanged(TreePath path, Object newValue) {
-
+        treeModel.valueForPathChanged(path, newValue);
     }
 
     public int LexicographicTree.getIndexOfChild(Object parent, Object child) {
-        return 0;
+        return treeModel.getIndexOfChild(parent, child);
     }
 
     public void LexicographicTree.addTreeModelListener(TreeModelListener l) {
-
+        treeModel.addTreeModelListener(l);
     }
 
     public void LexicographicTree.removeTreeModelListener(TreeModelListener l) {
-
+        treeModel.removeTreeModelListener(l);
     }
 
     /* TREE NODE */
 
     declare parents : tree.AbstractNode implements TreeNode;
 
-    private DefaultMutableTreeNode AbstractNode.treeNode = new DefaultMutableTreeNode("default");
+    private DefaultMutableTreeNode AbstractNode.treeNode = new DefaultMutableTreeNode("");
 
     public int AbstractNode.getChildCount() {
-        return 0;
+        return treeNode.getChildCount();
     }
 
     public TreeNode AbstractNode.getChildAt(int childIndex) {
-        return null;
+        return treeNode.getChildAt(childIndex);
     }
 
     public TreeNode AbstractNode.getParent() {
-        return null;
+        return treeNode.getParent();
     }
 
     public int AbstractNode.getIndex(TreeNode node) {
-        return 0;
+        return treeNode.getIndex(node);
     }
 
     public boolean AbstractNode.getAllowsChildren() {
-        return false;
+        return treeNode.getAllowsChildren();
     }
 
     public boolean AbstractNode.isLeaf() {
-        return false;
+        return treeNode.isLeaf();
     }
 
     public Enumeration AbstractNode.children() {
-        return null;
+        return treeNode.children();
     }
 
     /* POINTCUTS */
@@ -114,53 +106,49 @@ privileged public aspect Visualization {
         mainWindow.setVisible(true);
     }
 
-    pointcut addNodePointcut(String s, LexicographicTree tree) : call(AbstractNode AbstractNode.add(String)) && args(s) && this(tree);
-    after(String s, LexicographicTree tree) returning(AbstractNode node) : addNodePointcut(s, tree) {
+    pointcut lexicographicTreeAddPointcut(String s, LexicographicTree tree) : call(AbstractNode AbstractNode.add(String)) && args(s) && this(tree);
+    after(String s, LexicographicTree tree) returning(AbstractNode node) : lexicographicTreeAddPointcut(s, tree) {
         System.out.println("Pointcut LT.add: " + s);
+        DefaultMutableTreeNode root = ((DefaultMutableTreeNode) tree.getRoot());
+        root.add(node.treeNode);
+        // TODO use events to report changes
+        tree.treeModel.nodeChanged((TreeNode) tree.getRoot());
+        tree.treeModel.reload();
     }
 
-    /*pointcut constructorLexicographicTree() : call(public LexicographicTree.new());
-    after() returning(LexicographicTree tree) : constructorLexicographicTree() {
-        System.out.println("Pointcut LT.new");
-        tree.treeModel = new DefaultTreeModel(tree.getRoot());
-        tree.view.setModel(tree.treeModel);
-    }*/
-
-    pointcut setViewPointcut(LexicographicTree tree) : call(void LexicographicTree.setView(JTree)) && target(tree);
-    after(LexicographicTree tree) : setViewPointcut(tree) {
-        System.out.println("Pointcut LT.set.view");
-        tree.treeModel = new DefaultTreeModel(tree.getRoot());
-        tree.view.setModel(tree.treeModel);
+    pointcut constructorNodePointcut() : call(public Node.new(AbstractNode, AbstractNode, char)) && args(AbstractNode, AbstractNode, char);
+    after() returning(Node node) : constructorNodePointcut() {
+        System.out.println("Pointcut Node.new: " + node.value);
+        node.treeNode.setUserObject(node.value);
     }
 
-    pointcut writeNodeValue(char newValue, Node node) : set(private char Node.value) && args(newValue) && target(node);
-    after(char newValue, Node node) : writeNodeValue(newValue, node) {
-        System.out.println("Pointcut Node.set.value: " + newValue);
-        node.treeNode = new DefaultMutableTreeNode(newValue);
-    }
-
-    /*pointcut writeNodeChild(Node node) : set(private AbstractNode Node.child) && args(AbstractNode) && target(node);
-    before(Node node) : writeNodeChild(node) {
+    pointcut writeNodeChild(Node node, AbstractNode newChild) : set(private AbstractNode Node.child) && args(newChild) && target(node);
+    before(Node node, AbstractNode newChild) : writeNodeChild(node, newChild) {
         System.out.println("Pointcut before Node.set.child");
-        node.treeNode.remove(node.child.treeNode);
+        if (node.treeNode.isNodeChild(newChild.treeNode))
+            node.treeNode.remove(newChild.treeNode);
     }
-    after(Node node) : writeNodeChild(node) {
+    after(Node node, AbstractNode newChild) : writeNodeChild(node, newChild) {
         System.out.println("Pointcut after Node.set.child");
-        node.treeNode.add(node.child.treeNode);
-    }*/
-
-    /*pointcut writeAbstractNodeBrother(AbstractNode abstractNode) : set(protected AbstractNode AbstractNode.brother) && args(AbstractNode) && target(abstractNode);
-    before(AbstractNode abstractNode) : writeAbstractNodeBrother(abstractNode) {
-        System.out.println("Pointcut before AbstractNode.set.brother");
-        DefaultMutableTreeNode parent = (DefaultMutableTreeNode) abstractNode.treeNode.getParent();
-        if (abstractNode.brother != null)
-            parent.remove(abstractNode.brother.treeNode);
+        node.treeNode.insert(newChild.treeNode, 0);
     }
-    after(AbstractNode abstractNode) : writeAbstractNodeBrother(abstractNode) {
+
+    pointcut writeAbstractNodeBrother(AbstractNode abstractNode, AbstractNode newBrother) : set(protected AbstractNode AbstractNode.brother) && args(newBrother) && target(abstractNode);
+    after(AbstractNode abstractNode, AbstractNode newBrother) : writeAbstractNodeBrother(abstractNode, newBrother) {
         System.out.println("Pointcut after AbstractNode.set.brother");
-        DefaultMutableTreeNode parent = (DefaultMutableTreeNode) abstractNode.treeNode.getParent();
-        if (abstractNode.brother != null)
-            parent.add(abstractNode.brother.treeNode);
-    }*/
+        if (newBrother != null) {
+            // left
+            DefaultMutableTreeNode parent = (DefaultMutableTreeNode) newBrother.treeNode.getParent();
+            if (parent != null)
+                // TODO the insertion is at the correct index but for whatever reason its not done correctly
+                parent.insert(abstractNode.treeNode, parent.getIndex(newBrother.treeNode));
+            else {
+                // right
+                parent = (DefaultMutableTreeNode) abstractNode.treeNode.getParent();
+                if (parent != null)
+                    parent.insert(newBrother.treeNode, parent.getIndex(abstractNode.treeNode) + 1);
+            }
+        }
+    }
 
 }
