@@ -149,7 +149,7 @@ privileged public aspect Visualization {
         node.treeNode.add(node.child.treeNode);
     }*/
 
-    pointcut writeAbstractNodeBrother(AbstractNode abstractNode) : set(protected AbstractNode AbstractNode.brother) && args(AbstractNode) && target(abstractNode);
+    /*pointcut writeAbstractNodeBrother(AbstractNode abstractNode) : set(protected AbstractNode AbstractNode.brother) && args(AbstractNode) && target(abstractNode);
     before(AbstractNode abstractNode) : writeAbstractNodeBrother(abstractNode) {
         System.out.println("Pointcut before AbstractNode.set.brother");
         DefaultMutableTreeNode parent = (DefaultMutableTreeNode) abstractNode.treeNode.getParent();
@@ -161,6 +161,6 @@ privileged public aspect Visualization {
         DefaultMutableTreeNode parent = (DefaultMutableTreeNode) abstractNode.treeNode.getParent();
         if (abstractNode.brother != null)
             parent.add(abstractNode.brother.treeNode);
-    }
+    }*/
 
 }
