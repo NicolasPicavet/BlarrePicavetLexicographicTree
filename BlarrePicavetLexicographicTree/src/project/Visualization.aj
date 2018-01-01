@@ -10,10 +10,11 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.util.Enumeration;
 
-public aspect Visualization {
+privileged public aspect Visualization {
 
     /* TREE MODEL */
 
@@ -123,11 +124,11 @@ public aspect Visualization {
     }
 
     pointcut writeNodeChild(Node node, AbstractNode newChild) : set(private AbstractNode Node.child) && args(newChild) && target(node);
-    before(Node node, AbstractNode newChild) : writeNodeChild(node, newChild) {
+    /*before(Node node, AbstractNode newChild) : writeNodeChild(node, newChild) {
         System.out.println("Pointcut before Node.set.child");
         if (node.treeNode.isNodeChild(newChild.treeNode))
             node.treeNode.remove(newChild.treeNode);
-    }
+    }*/
     after(Node node, AbstractNode newChild) : writeNodeChild(node, newChild) {
         System.out.println("Pointcut after Node.set.child");
         node.treeNode.insert(newChild.treeNode, 0);
