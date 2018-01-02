@@ -6,6 +6,8 @@ import com.intellij.uiDesigner.core.Spacer;
 import tree.LexicographicTree;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultTreeCellRenderer;
+
 import java.awt.*;
 import java.awt.event.*;
 
@@ -54,7 +56,7 @@ public class MainWindow extends JFrame {
         menuBar.add(fileMenu);
         menuBar.add(helpMenu);
         setJMenuBar(menuBar);
-
+        
         // Listeners
         addButton.addMouseListener(new MouseAdapter() {
             @Override
@@ -104,6 +106,12 @@ public class MainWindow extends JFrame {
 
         loadMenuItem.addActionListener(new OpenFileListener());
         saveMenuItem.addActionListener(new SaveFileListener());
+        
+        //Remove folder icon
+        DefaultTreeCellRenderer renderer = (DefaultTreeCellRenderer) tree.getCellRenderer();
+        renderer.setLeafIcon(null);
+        renderer.setClosedIcon(null);
+        renderer.setOpenIcon(null);
     }
 
     public void addText() {
@@ -216,6 +224,19 @@ public class MainWindow extends JFrame {
     public static DefaultListModel<String> getListModel() {
         return listModel;
     }
-
+    
+    /**
+     * Expand all JTree nodes
+     * Taken from https://stackoverflow.com/questions/15210979/how-do-i-auto-expand-a-jtree-when-setting-a-new-treemodel
+     * @param tree
+     * @param startingIndex
+     * @param rowCount
+     */
+    public void expandAllNodes() {
+    	for (int i = 0; i < tree.getRowCount(); i++) {
+    	    tree.expandRow(i);
+    	}
+    }
 
 }
+

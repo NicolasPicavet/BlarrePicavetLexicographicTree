@@ -15,6 +15,9 @@ import javax.swing.tree.TreePath;
 import java.util.Enumeration;
 
 privileged public aspect Visualization {
+	
+
+    MainWindow mainWindow;
 
     /* TREE MODEL */
 
@@ -102,7 +105,7 @@ privileged public aspect Visualization {
     pointcut mainPointcut(String[] args) : execution(public static void LexicographicTree.main(String[])) && args(args);
     after(String[] args) : mainPointcut(args) {
         System.out.println("Pointcut LT.main");
-        MainWindow mainWindow = new MainWindow("Arbre Lexicographic");
+        mainWindow = new MainWindow("Arbre Lexicographic");
         mainWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainWindow.setVisible(true);
     }
@@ -115,6 +118,7 @@ privileged public aspect Visualization {
         // TODO use events to report changes
         tree.treeModel.nodeChanged((TreeNode) tree.getRoot());
         tree.treeModel.reload();
+        mainWindow.expandAllNodes();
     }
 
     pointcut constructorNodePointcut() : call(public Node.new(AbstractNode, AbstractNode, char)) && args(AbstractNode, AbstractNode, char);
