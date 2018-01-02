@@ -19,7 +19,6 @@ import java.util.Enumeration;
 
 privileged public aspect Visualization {
 	
-
     MainWindow mainWindow;
 
     /* TREE MODEL */
@@ -117,13 +116,17 @@ privileged public aspect Visualization {
     after(String s, LexicographicTree tree) returning(AbstractNode node) : lexicographicTreeAddPointcut(s, tree) {
         System.out.println("Pointcut LT.add: " + s);
         
+        //Add to List
+        mainWindow.getListModel().add(0, s);
+        mainWindow.sortList();
+		
+        //Add to JTree
         DefaultMutableTreeNode root = ((DefaultMutableTreeNode) tree.getRoot());
         root.add(node.treeNode);
-        
-        // TODO use events to report changes
         tree.treeModel.nodeChanged((TreeNode) tree.getRoot());
-        sortTree(root);
+        sortTree(root); //Sort JTree first level
         tree.treeModel.reload();
+        
         mainWindow.expandAllNodes();
     }
 
@@ -134,11 +137,6 @@ privileged public aspect Visualization {
     }
 
     pointcut writeNodeChild(Node node, AbstractNode newChild) : set(private AbstractNode Node.child) && args(newChild) && target(node);
-    /*before(Node node, AbstractNode newChild) : writeNodeChild(node, newChild) {
-        System.out.println("Pointcut before Node.set.child");
-        if (node.treeNode.isNodeChild(newChild.treeNode))
-            node.treeNode.remove(newChild.treeNode);
-    }*/
     after(Node node, AbstractNode newChild) : writeNodeChild(node, newChild) {
         System.out.println("Pointcut after Node.set.child");
         node.treeNode.insert(newChild.treeNode, 0);
@@ -163,52 +161,56 @@ privileged public aspect Visualization {
     }
     
     
-    /**
-     * Sort jTree alphabetically
-     * Taken from https://java-swing-tips.blogspot.fr/2013/09/how-to-sort-jtree-nodes.html
-     * @param root
-     */
-    public static void sortTree(DefaultMutableTreeNode root) {
-    	  Enumeration e = root.depthFirstEnumeration();
-    	  while (e.hasMoreElements()) {
-    	    DefaultMutableTreeNode node = (DefaultMutableTreeNode) e.nextElement();
-    	    if (!node.isLeaf()) {
-    	      sort(node);
-    	    }
-    	  }
-    	}
-	public static Comparator< DefaultMutableTreeNode> tnc = new Comparator< DefaultMutableTreeNode>() {
-	  @Override public int compare(DefaultMutableTreeNode a, DefaultMutableTreeNode b) {
-	    //Sort the parent and child nodes separately:
-	    if (a.isLeaf() && !b.isLeaf()) {
-	      return 1;
-	    } else if (!a.isLeaf() && b.isLeaf()) {
-	      return -1;
-	    } else {
-	      String sa = a.getUserObject().toString();
-	      String sb = b.getUserObject().toString();
-	      return sa.compareToIgnoreCase(sb);
-	    }
-	  }
+	/**
+	 * Sort jTree alphabetically Taken from
+	 * https://java-swing-tips.blogspot.fr/2013/09/how-to-sort-jtree-nodes.html
+	 * 
+	 * @param root
+	 */
+	public static void sortTree(DefaultMutableTreeNode root) {
+		Enumeration e = root.depthFirstEnumeration();
+		while (e.hasMoreElements()) {
+			DefaultMutableTreeNode node = (DefaultMutableTreeNode) e.nextElement();
+			if (!node.isLeaf()) {
+				sort(node);
+			}
+		}
+	}
+
+	public static Comparator<DefaultMutableTreeNode> tnc = new Comparator<DefaultMutableTreeNode>() {
+		@Override
+		public int compare(DefaultMutableTreeNode a, DefaultMutableTreeNode b) {
+			// Sort the parent and child nodes separately:
+			if (a.isLeaf() && !b.isLeaf()) {
+				return 1;
+			} else if (!a.isLeaf() && b.isLeaf()) {
+				return -1;
+			} else {
+				String sa = a.getUserObject().toString();
+				String sb = b.getUserObject().toString();
+				return sa.compareToIgnoreCase(sb);
+			}
+		}
 	};
-	//selection sort
+
+	// selection sort
 	public static void sort(DefaultMutableTreeNode parent) {
-	  int n = parent.getChildCount();
-	  for (int i = 0; i < n - 1; i++) {
-	    int min = i;
-	    for (int j = i + 1; j < n; j++) {
-	      if (tnc.compare((DefaultMutableTreeNode) parent.getChildAt(min),
-	                      (DefaultMutableTreeNode) parent.getChildAt(j)) > 0) {
-	        min = j;
-	      }
-	    }
-	    if (i != min) {
-	      MutableTreeNode a = (MutableTreeNode) parent.getChildAt(i);
-	      MutableTreeNode b = (MutableTreeNode) parent.getChildAt(min);
-	      parent.insert(b, i);
-	      parent.insert(a, min);
-	    }
-	  }
+		int n = parent.getChildCount();
+		for (int i = 0; i < n - 1; i++) {
+			int min = i;
+			for (int j = i + 1; j < n; j++) {
+				if (tnc.compare((DefaultMutableTreeNode) parent.getChildAt(min),
+						(DefaultMutableTreeNode) parent.getChildAt(j)) > 0) {
+					min = j;
+				}
+			}
+			if (i != min) {
+				MutableTreeNode a = (MutableTreeNode) parent.getChildAt(i);
+				MutableTreeNode b = (MutableTreeNode) parent.getChildAt(min);
+				parent.insert(b, i);
+				parent.insert(a, min);
+			}
+		}
 	}
 
 }
