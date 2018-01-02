@@ -107,6 +107,15 @@ public class MainWindow extends JFrame {
 				super.keyTyped(e);
 			}
 		});
+		
+		list.addMouseListener(new MouseAdapter() {
+		    public void mouseClicked(MouseEvent evt) {
+		        if (evt.getClickCount() == 2) { // Double-click detected
+		            int index = list.locationToIndex(evt.getPoint());
+		            inputText.setText( (String)list.getModel().getElementAt(index) );
+		        }
+		    }
+		});
 
 		loadMenuItem.addActionListener(new OpenFileListener());
 		saveMenuItem.addActionListener(new SaveFileListener());
