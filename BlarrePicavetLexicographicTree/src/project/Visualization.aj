@@ -9,9 +9,12 @@ import javax.swing.*;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
+
+import java.util.Comparator;
 import java.util.Enumeration;
 
 privileged public aspect Visualization {
@@ -113,10 +116,13 @@ privileged public aspect Visualization {
     pointcut lexicographicTreeAddPointcut(String s, LexicographicTree tree) : call(AbstractNode AbstractNode.add(String)) && args(s) && this(tree);
     after(String s, LexicographicTree tree) returning(AbstractNode node) : lexicographicTreeAddPointcut(s, tree) {
         System.out.println("Pointcut LT.add: " + s);
+        
         DefaultMutableTreeNode root = ((DefaultMutableTreeNode) tree.getRoot());
         root.add(node.treeNode);
+        
         // TODO use events to report changes
         tree.treeModel.nodeChanged((TreeNode) tree.getRoot());
+        sortTree(root);
         tree.treeModel.reload();
         mainWindow.expandAllNodes();
     }
@@ -155,5 +161,54 @@ privileged public aspect Visualization {
             }
         }
     }
+    
+    
+    /**
+     * Sort jTree alphabetically
+     * Taken from https://java-swing-tips.blogspot.fr/2013/09/how-to-sort-jtree-nodes.html
+     * @param root
+     */
+    public static void sortTree(DefaultMutableTreeNode root) {
+    	  Enumeration e = root.depthFirstEnumeration();
+    	  while (e.hasMoreElements()) {
+    	    DefaultMutableTreeNode node = (DefaultMutableTreeNode) e.nextElement();
+    	    if (!node.isLeaf()) {
+    	      sort(node);
+    	    }
+    	  }
+    	}
+	public static Comparator< DefaultMutableTreeNode> tnc = new Comparator< DefaultMutableTreeNode>() {
+	  @Override public int compare(DefaultMutableTreeNode a, DefaultMutableTreeNode b) {
+	    //Sort the parent and child nodes separately:
+	    if (a.isLeaf() && !b.isLeaf()) {
+	      return 1;
+	    } else if (!a.isLeaf() && b.isLeaf()) {
+	      return -1;
+	    } else {
+	      String sa = a.getUserObject().toString();
+	      String sb = b.getUserObject().toString();
+	      return sa.compareToIgnoreCase(sb);
+	    }
+	  }
+	};
+	//selection sort
+	public static void sort(DefaultMutableTreeNode parent) {
+	  int n = parent.getChildCount();
+	  for (int i = 0; i < n - 1; i++) {
+	    int min = i;
+	    for (int j = i + 1; j < n; j++) {
+	      if (tnc.compare((DefaultMutableTreeNode) parent.getChildAt(min),
+	                      (DefaultMutableTreeNode) parent.getChildAt(j)) > 0) {
+	        min = j;
+	      }
+	    }
+	    if (i != min) {
+	      MutableTreeNode a = (MutableTreeNode) parent.getChildAt(i);
+	      MutableTreeNode b = (MutableTreeNode) parent.getChildAt(min);
+	      parent.insert(b, i);
+	      parent.insert(a, min);
+	    }
+	  }
+	}
 
 }
