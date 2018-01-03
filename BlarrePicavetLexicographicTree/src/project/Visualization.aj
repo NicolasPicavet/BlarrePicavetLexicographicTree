@@ -112,7 +112,7 @@ privileged public aspect Visualization {
         mainWindow.setVisible(true);
     }
 
-    pointcut lexicographicTreeAddPointcut(String s, LexicographicTree tree) : call(AbstractNode AbstractNode.add(String)) && args(s) && this(tree);
+    pointcut lexicographicTreeAddPointcut(String s, LexicographicTree tree) : call(AbstractNode AbstractNode.add(String)) && !call(public AbstractNode AbstractNode.remove(String)) && args(s) && this(tree);
     after(String s, LexicographicTree tree) returning(AbstractNode node) : lexicographicTreeAddPointcut(s, tree) {
         System.out.println("Pointcut LT.add: " + s);
         
@@ -136,13 +136,13 @@ privileged public aspect Visualization {
         node.treeNode.setUserObject(node.value);
     }
 
-    pointcut writeNodeChild(Node node, AbstractNode newChild) : set(private AbstractNode Node.child) && args(newChild) && target(node);
+    pointcut writeNodeChild(Node node, AbstractNode newChild) : set(private AbstractNode Node.child) && !call(public AbstractNode AbstractNode.remove(String)) && args(newChild) && target(node);
     after(Node node, AbstractNode newChild) : writeNodeChild(node, newChild) {
         System.out.println("Pointcut after Node.set.child");
         node.treeNode.insert(newChild.treeNode, 0);
     }
 
-    pointcut writeAbstractNodeBrother(AbstractNode abstractNode, AbstractNode newBrother) : set(protected AbstractNode AbstractNode.brother) && args(newBrother) && target(abstractNode);
+    pointcut writeAbstractNodeBrother(AbstractNode abstractNode, AbstractNode newBrother) : set(protected AbstractNode AbstractNode.brother) && !call(public AbstractNode AbstractNode.remove(String)) &&  args(newBrother) && target(abstractNode);
     after(AbstractNode abstractNode, AbstractNode newBrother) : writeAbstractNodeBrother(abstractNode, newBrother) {
         System.out.println("Pointcut after AbstractNode.set.brother");
         if (newBrother != null) {
@@ -157,6 +157,48 @@ privileged public aspect Visualization {
                 if (parent != null)
                     parent.insert(newBrother.treeNode, parent.getIndex(abstractNode.treeNode) + 1);
             }
+        }
+    }
+    
+
+    /**
+     * Update the JTree after a remove
+     * @param s
+     * @param tree
+     */
+    pointcut lexicographicTreeRemovePointcut(String s, LexicographicTree tree) : call(AbstractNode AbstractNode.remove(String)) && args(s) && this(tree);
+    after(String s, LexicographicTree tree) returning(AbstractNode node) : lexicographicTreeRemovePointcut(s, tree) {
+        System.out.println("Pointcut LT.remove: " + s);
+
+        //remove from List
+        mainWindow.getListModel().removeElement(s);
+        mainWindow.sortList();
+
+        //reload JTree
+        tree.treeModel.reload();
+    }
+
+	/**
+	 * @TODO: remove specific Nodes from the JTree cause right now it's not working
+	 * @param abstractNode
+	 */
+    pointcut removeAbstractNodeBrother(AbstractNode abstractNode) : call(public AbstractNode AbstractNode.remove(String)) && target(abstractNode);
+    after(AbstractNode abstractNode) : removeAbstractNodeBrother(abstractNode) {
+
+//    pointcut lexicographicTreeRemovePointcut(AbstractNode abstractNode, LexicographicTree tree) : call(AbstractNode AbstractNode.remove(String)) && args(abstractNode) && this(tree);
+//    after(AbstractNode abstractNode, LexicographicTree tree) : lexicographicTreeRemovePointcut(abstractNode, tree) {
+
+        DefaultMutableTreeNode parent = (DefaultMutableTreeNode) abstractNode.treeNode.getParent();
+        if (parent != null) {
+            System.out.println("REMOVE  "+abstractNode.treeNode);
+//            parent.remove(parent.getIndex(abstractNode.treeNode));
+//            parent.remove((DefaultMutableTreeNode) abstractNode.treeNode);
+//        	parent.removeAllChildren();
+            abstractNode.treeNode.removeAllChildren();
+        }
+        else
+        {
+        	
         }
     }
     
