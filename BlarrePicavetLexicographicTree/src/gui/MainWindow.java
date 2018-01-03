@@ -71,12 +71,7 @@ public class MainWindow extends JFrame {
 		deleteButton.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				String toRemove = inputText.getText();
-				if (lexicographicTree.remove(toRemove)) {
-					listModel.removeElement(toRemove);
-					statusText.setText("\"" + toRemove + "\" removed");
-				} else
-					statusText.setText("\"" + toRemove + "\" not removed");
+				removeText();
 			}
 		});
 		searchButton.addMouseListener(new MouseAdapter() {
@@ -133,6 +128,14 @@ public class MainWindow extends JFrame {
 			statusText.setText("\"" + toAdd + "\" added");
 		else
 			statusText.setText("\"" + toAdd + "\" not added");
+	}
+
+	public void removeText() {
+		String toRemove = inputText.getText();
+		if (lexicographicTree.remove(toRemove))
+			statusText.setText("\"" + toRemove + "\" removed");
+		else
+			statusText.setText("\"" + toRemove + "\" not removed");
 	}
 
 	public void sortList() {
