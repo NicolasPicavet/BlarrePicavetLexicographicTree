@@ -106,6 +106,9 @@ privileged public aspect Visualization {
         return treeNode.children();
     }
 
+
+
+
     /* POINTCUTS */
 
     // main
@@ -118,6 +121,20 @@ privileged public aspect Visualization {
         mainWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainWindow.setVisible(true);
     }
+
+    // value
+    pointcut valueNodeConstructor() : call(public Node.new(AbstractNode, AbstractNode, char)) && args(AbstractNode, AbstractNode, char);
+    after() returning(Node node) : valueNodeConstructor() {
+        System.out.println("Pointcut Node.new: " + node.value);
+
+        // Set the value of the Node to be displayed
+        node.treeNode.setUserObject(node.value);
+    }
+
+
+
+
+    /*ADD*/
 
     // LT.add
     pointcut lexicographicTreeAddPointcut(String s, LexicographicTree tree) : call(AbstractNode AbstractNode.add(String)) && args(s) && this(tree);
@@ -136,12 +153,13 @@ privileged public aspect Visualization {
         DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) tree.treeModel.getRoot();
         Enumeration rootChildren = rootNode.children();
         boolean rootHasChildren = rootChildren.hasMoreElements();
+        // copy children references to a list
         List<DefaultMutableTreeNode> rootChildrenList = new ArrayList<>();
         while(rootChildren.hasMoreElements())
             rootChildrenList.add((DefaultMutableTreeNode) rootChildren.nextElement());
         rootNode.removeAllChildren();
         if (!rootHasChildren)
-            // root was empty, it is the first child added
+            // root level was empty, it is the first child added
             rootNode.add(node.treeNode);
         for (DefaultMutableTreeNode tn : rootChildrenList)
             // add all previous child to root
@@ -152,30 +170,7 @@ privileged public aspect Visualization {
         mainWindow.expandAllNodes();
     }
 
-    // LT.remove
-    pointcut lexicographicTreeRemovePointcut(String s, LexicographicTree tree) : call(AbstractNode AbstractNode.remove(String)) && args(s) && this(tree);
-    after(String s, LexicographicTree tree) returning(AbstractNode node) : lexicographicTreeRemovePointcut(s, tree) {
-        System.out.println("Pointcut LT.remove: " + s);
-
-        // Remove from List
-        mainWindow.getListModel().removeElement(s);
-
-        // Remove from JTree
-        tree.treeModel = new DefaultTreeModel(node.treeNode);
-        tree.treeModel.reload();
-        mainWindow.expandAllNodes();
-    }
-
-    // value
-    pointcut valueNodeConstructor() : call(public Node.new(AbstractNode, AbstractNode, char)) && args(AbstractNode, AbstractNode, char);
-    after() returning(Node node) : valueNodeConstructor() {
-        System.out.println("Pointcut Node.new: " + node.value);
-
-        // Set the value of the Node to be displayed
-        node.treeNode.setUserObject(node.value);
-    }
-
-    // set child
+    // set child !*.remove
     pointcut writeNodeChildAdd(Node node, AbstractNode newChild) : set(private AbstractNode Node.child) && !withincode(public * *.remove(String)) && args(newChild) && target(node);
     after(Node node, AbstractNode newChild) : writeNodeChildAdd(node, newChild) {
         System.out.println("Pointcut Node.set.child ADD");
@@ -214,52 +209,66 @@ privileged public aspect Visualization {
             parent.insert(newBrotherValue.treeNode, parent.getIndex(executingNode.treeNode) + 1);
     }
 
-    pointcut removeNodeChild(Node node, AbstractNode newChild) : set(private AbstractNode Node.child) && withincode(* *.remove(String)) && args(newChild) && target(node);
-    after(Node node, AbstractNode newChild) : removeNodeChild(node, newChild) {
-        System.out.println("Pointcut Node.set.child in remove");
 
-        node.treeNode.remove(newChild.treeNode);
-    }
-    
 
-    /**
-     * Update the JTree after a remove
-     * @param s
-     * @param tree
+    /*REMOVE*/
+
+    // LT.remove
     pointcut lexicographicTreeRemovePointcut(String s, LexicographicTree tree) : call(AbstractNode AbstractNode.remove(String)) && args(s) && this(tree);
     after(String s, LexicographicTree tree) returning(AbstractNode node) : lexicographicTreeRemovePointcut(s, tree) {
         System.out.println("Pointcut LT.remove: " + s);
 
-        //remove from List
+        // Remove from List
         mainWindow.getListModel().removeElement(s);
-        mainWindow.sortList();
 
-        //reload JTree
+        // Remove from JTree
+        // nothing to do
+
+        // refresh JTree
         tree.treeModel.reload();
+        mainWindow.expandAllNodes();
     }
 
-	*//**
-	 * @TODO: remove specific Nodes from the JTree cause right now it's not working
-	 * @param abstractNode
-	 *//*
-    pointcut removeAbstractNodeBrother(AbstractNode abstractNode) : call(public AbstractNode AbstractNode.remove(String)) && target(abstractNode);
-    after(AbstractNode abstractNode) : removeAbstractNodeBrother(abstractNode) {
+    // set child Node.remove
+    pointcut writeNodeChildRemove(Node executingNode, AbstractNode newChildValue) : set(private AbstractNode Node.child) && withincode(public AbstractNode Node.remove(String)) && args(newChildValue) && this(executingNode);
+    after(Node executingNode, AbstractNode newChildValue) : writeNodeChildRemove(executingNode, newChildValue) {
+        System.out.println("Pointcut Node.set.child REMOVE");
 
-//    pointcut lexicographicTreeRemovePointcut(AbstractNode abstractNode, LexicographicTree tree) : call(AbstractNode AbstractNode.remove(String)) && args(abstractNode) && this(tree);
-//    after(AbstractNode abstractNode, LexicographicTree tree) : lexicographicTreeRemovePointcut(abstractNode, tree) {
+        // Node line 73
+        if (newChildValue instanceof EmptyNode)
+            // executingNode has no child and need to remove itself from its parent
+            executingNode.treeNode.removeFromParent();
+    }
 
-        DefaultMutableTreeNode parent = (DefaultMutableTreeNode) abstractNode.treeNode.getParent();
-        if (parent != null) {
-            System.out.println("REMOVE  "+abstractNode.treeNode);
-//            parent.remove(parent.getIndex(abstractNode.treeNode));
-//            parent.remove((DefaultMutableTreeNode) abstractNode.treeNode);
-//        	parent.removeAllChildren();
-            abstractNode.treeNode.removeAllChildren();
-        }
-        else
-        {
-        	
-        }
+    // Mark.remove
+    pointcut markRemove(Mark executingMark) : execution(public AbstractNode Mark.remove(String)) && this(executingMark);
+    after(Mark executingMark) returning(AbstractNode returnedNode) : markRemove(executingMark) {
+        System.out.println("Pointcut Mark.remove");
+
+        // Mark line 35
+        // returned value is the executingMark.brother
+        // executingMark need to delete itself from its parent
+        if (returnedNode != executingMark)
+            executingMark.treeNode.removeFromParent();
+    }
+
+    /*
+    TODO to remove if useless
+    // set brother Mark.remove
+    pointcut writeMarkBrotherRemove(AbstractNode executingNode, AbstractNode targetNode, AbstractNode newBrotherValue) : set(protected AbstractNode AbstractNode.brother) && withincode(public AbstractNode Mark.remove(String)) && args(newBrotherValue) && this(executingNode) && target(targetNode);
+    after(AbstractNode executingNode, AbstractNode targetNode, AbstractNode newBrotherValue) : writeMarkBrotherRemove(executingNode, targetNode, newBrotherValue) {
+        System.out.println("Pointcut Mark.set.brother REMOVE");
+
+        // Mark line 36
+    }
+
+    // set brother Node.remove
+    pointcut writeNodeBrotherRemove(AbstractNode executingNode, AbstractNode targetNode, AbstractNode newBrotherValue) : set(protected AbstractNode AbstractNode.brother) && withincode(public AbstractNode Node.remove(String)) &&  args(newBrotherValue) && this(executingNode) && target(targetNode);
+    after(AbstractNode executingNode, AbstractNode targetNode, AbstractNode newBrotherValue) : writeNodeBrotherRemove(executingNode, targetNode, newBrotherValue) {
+        System.out.println("Pointcut Node.set.brother REMOVE");
+
+        DefaultMutableTreeNode parent = (DefaultMutableTreeNode) executingNode.treeNode.getParent();
+
+        // Node line 78
     }*/
-
 }
