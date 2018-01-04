@@ -185,14 +185,16 @@ privileged public aspect Visualization {
     }
 
     // set brother Mark.add
-    pointcut writeMarkBrotherAdd(Mark brotherOwner, AbstractNode previousBrother, AbstractNode newBrother) : set(protected AbstractNode AbstractNode.brother) && withincode(public AbstractNode Mark.add(String)) && args(newBrother) && this(brotherOwner) && target(previousBrother);
-    after(Mark brotherOwner, AbstractNode previousBrother, AbstractNode newBrother) : writeMarkBrotherAdd(brotherOwner, previousBrother, newBrother) {
+    pointcut writeMarkBrotherAdd(AbstractNode executingNode, AbstractNode targetNode, AbstractNode newBrotherValue) : set(protected AbstractNode AbstractNode.brother) && withincode(public AbstractNode Mark.add(String)) && args(newBrotherValue) && this(executingNode) && target(targetNode);
+    after(AbstractNode executingNode, AbstractNode targetNode, AbstractNode newBrotherValue) : writeMarkBrotherAdd(executingNode, targetNode, newBrotherValue) {
         System.out.println("Pointcut Mark.set.brother ADD");
 
         // Mark line 28
-        // when adding a brother to a Mark its treeNode must be added to the Mark parent treeNode
-        DefaultMutableTreeNode parent = (DefaultMutableTreeNode) brotherOwner.treeNode.getParent();
-        parent.add(newBrother.treeNode);
+        // executingNode and targetNode are the same
+        // should not add if already present (added by Node line 54)
+        DefaultMutableTreeNode parent = (DefaultMutableTreeNode) executingNode.treeNode.getParent();
+        if (!parent.isNodeChild(newBrotherValue.treeNode))
+            parent.add(newBrotherValue.treeNode);
     }
 
     // set brother Node.add
@@ -203,15 +205,13 @@ privileged public aspect Visualization {
         DefaultMutableTreeNode parent = (DefaultMutableTreeNode) executingNode.treeNode.getParent();
 
         // Node line 54
-        if (executingNode == newBrotherValue) {
-            int index = parent.getIndex(executingNode.treeNode) - 1;
-            parent.insert(targetNode.treeNode, index > 0 ? index : 0);
-        }
+        // executingNode and newBrotherValue are the same
+        if (executingNode == newBrotherValue)
+            parent.insert(targetNode.treeNode, parent.getIndex(executingNode.treeNode));
 
         // Node line 61
-        else if(newBrotherValue.getParent() == null) {
+        else if(newBrotherValue.getParent() == null)
             parent.insert(newBrotherValue.treeNode, parent.getIndex(executingNode.treeNode) + 1);
-        }
     }
 
     pointcut removeNodeChild(Node node, AbstractNode newChild) : set(private AbstractNode Node.child) && withincode(* *.remove(String)) && args(newChild) && target(node);
