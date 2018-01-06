@@ -11,13 +11,11 @@ import javax.swing.*;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -29,10 +27,13 @@ privileged public aspect Visualization {
 
     declare parents : tree.LexicographicTree implements TreeModel;
 
-    private DefaultTreeModel LexicographicTree.treeModel;
+    private DefaultTreeModel LexicographicTree.treeModel; //Add treeModel attribute to LexicographicTree
 
-    private JTree LexicographicTree.view;
+    private JTree LexicographicTree.view; //Add JTree to LexicographicTree
 
+    /**
+     * Method for MainWindow.java to define 
+     */
     public void LexicographicTree.setView(JTree jTree) {
         view = jTree;
         DefaultMutableTreeNode root = new DefaultMutableTreeNode(" ");
@@ -40,34 +41,71 @@ privileged public aspect Visualization {
         view.setModel(treeModel);
     }
 
+	/**
+	 * Return the treeModel root
+	 */
     public Object LexicographicTree.getRoot() {
         return treeModel.getRoot();
     }
 
+	/**
+	 * Returns a treeModel child
+	 * @param parent
+	 * @param index
+	 */
     public Object LexicographicTree.getChild(Object parent, int index) {
         return treeModel.getChild(parent, index);
     }
 
+	/**
+	 * Returns direct children number
+	 * @param parent
+	 * @return int the children number
+	 */
     public int LexicographicTree.getChildCount(Object parent) {
         return treeModel.getChildCount(parent);
     }
 
+	/**
+	 * Check if node is leaf of the treeModel
+	 * @param node
+	 * @return boolean
+	 */
     public boolean LexicographicTree.isLeaf(Object node) {
         return treeModel.isLeaf(node);
     }
 
+    /**
+     * Checks if value for path has changed
+     * @param path
+     * @param newValue
+     */
     public void LexicographicTree.valueForPathChanged(TreePath path, Object newValue) {
         treeModel.valueForPathChanged(path, newValue);
     }
 
+    /**
+     * Returns index value of the child in parent
+     * @param parent
+     * @param child
+     * @return index value
+     */
     public int LexicographicTree.getIndexOfChild(Object parent, Object child) {
         return treeModel.getIndexOfChild(parent, child);
     }
 
+	/**
+	 * Adds a listener on TreeModelListener posted change
+	 * @param l
+	 */
     public void LexicographicTree.addTreeModelListener(TreeModelListener l) {
         treeModel.addTreeModelListener(l);
     }
 
+    /**
+     * Removes listener on TreeModelListener posted change
+     * @param l
+     */
     public void LexicographicTree.removeTreeModelListener(TreeModelListener l) {
         treeModel.removeTreeModelListener(l);
     }
@@ -107,11 +145,12 @@ privileged public aspect Visualization {
     }
 
 
-
-
     /* POINTCUTS */
 
-    // main
+    /**
+     * "Main" poincut. Calls the MainWindow class that will launch the graphical interface
+     * @param args
+     */
     pointcut mainPointcut(String[] args) : execution(public static void LexicographicTree.main(String[])) && args(args);
     after(String[] args) : mainPointcut(args) {
         System.out.println("Pointcut LT.main");
@@ -122,7 +161,9 @@ privileged public aspect Visualization {
         mainWindow.setVisible(true);
     }
 
-    // value
+    /**
+     * "Value" Pointcut. Sets the value (AbstractNode's character) on the threeNode object.
+     */
     pointcut valueNodeConstructor() : call(public Node.new(AbstractNode, AbstractNode, char)) && args(AbstractNode, AbstractNode, char);
     after() returning(Node node) : valueNodeConstructor() {
         System.out.println("Pointcut Node.new: " + node.value);
@@ -132,17 +173,15 @@ privileged public aspect Visualization {
     }
 
 
+    /*ADD pointcuts*/
 
-
-    /*ADD*/
-
-    // LT.add
+    // LT.add called on the AbstractNode's add method
     pointcut lexicographicTreeAddPointcut(String s, LexicographicTree tree) : call(AbstractNode AbstractNode.add(String)) && args(s) && this(tree);
     after(String s, LexicographicTree tree) returning(AbstractNode node) : lexicographicTreeAddPointcut(s, tree) {
         System.out.println("Pointcut LT.add: " + s);
 
         // Sorted insertion to List
-        DefaultListModel listModel = mainWindow.getListModel();
+        DefaultListModel<String> listModel = mainWindow.getListModel();
         int i = 0;
         for (; i < listModel.size(); i++)
             if (((String) listModel.getElementAt(i)).compareTo(s) > 0)
@@ -153,6 +192,7 @@ privileged public aspect Visualization {
         DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) tree.treeModel.getRoot();
         Enumeration rootChildren = rootNode.children();
         boolean rootHasChildren = rootChildren.hasMoreElements();
+        
         // copy children references to a list
         List<DefaultMutableTreeNode> rootChildrenList = new ArrayList<>();
         while(rootChildren.hasMoreElements())
@@ -170,7 +210,7 @@ privileged public aspect Visualization {
         mainWindow.expandAllNodes();
     }
 
-    // set child !*.remove
+    // Called when a child is set when not in any remove method ( !*.remove )
     pointcut writeNodeChildAdd(Node node, AbstractNode newChild) : set(private AbstractNode Node.child) && !withincode(public * *.remove(String)) && args(newChild) && target(node);
     after(Node node, AbstractNode newChild) : writeNodeChildAdd(node, newChild) {
         System.out.println("Pointcut Node.set.child ADD");
@@ -179,7 +219,7 @@ privileged public aspect Visualization {
         node.treeNode.insert(newChild.treeNode, 0);
     }
 
-    // set brother Mark.add
+    // Called when a brother is set and within a Mark.add method
     pointcut writeMarkBrotherAdd(AbstractNode executingNode, AbstractNode targetNode, AbstractNode newBrotherValue) : set(protected AbstractNode AbstractNode.brother) && withincode(public AbstractNode Mark.add(String)) && args(newBrotherValue) && this(executingNode) && target(targetNode);
     after(AbstractNode executingNode, AbstractNode targetNode, AbstractNode newBrotherValue) : writeMarkBrotherAdd(executingNode, targetNode, newBrotherValue) {
         System.out.println("Pointcut Mark.set.brother ADD");
@@ -192,7 +232,7 @@ privileged public aspect Visualization {
             parent.add(newBrotherValue.treeNode);
     }
 
-    // set brother Node.add
+    // Called when a brother is set and within a Node.add methode
     pointcut writeNodeBrotherAdd(AbstractNode executingNode, AbstractNode targetNode, AbstractNode newBrotherValue) : set(protected AbstractNode AbstractNode.brother) && withincode(public AbstractNode Node.add(String)) &&  args(newBrotherValue) && this(executingNode) && target(targetNode);
     after(AbstractNode executingNode, AbstractNode targetNode, AbstractNode newBrotherValue) : writeNodeBrotherAdd(executingNode, targetNode, newBrotherValue) {
         System.out.println("Pointcut Node.set.brother ADD");
@@ -213,7 +253,7 @@ privileged public aspect Visualization {
 
     /*REMOVE*/
 
-    // LT.remove
+    // LT.remove Called on AbstractNode.remove method 
     pointcut lexicographicTreeRemovePointcut(String s, LexicographicTree tree) : call(AbstractNode AbstractNode.remove(String)) && args(s) && this(tree);
     after(String s, LexicographicTree tree) returning(AbstractNode node) : lexicographicTreeRemovePointcut(s, tree) {
         System.out.println("Pointcut LT.remove: " + s);
@@ -222,14 +262,14 @@ privileged public aspect Visualization {
         mainWindow.getListModel().removeElement(s);
 
         // Remove from JTree
-        // nothing to do
+        // nothing to do, just refresh tree when the remove recursion has terminated
 
         // refresh JTree
         tree.treeModel.reload();
         mainWindow.expandAllNodes();
     }
 
-    // set child Node.remove
+    // Called when a child is set and within the Node.remove method
     pointcut writeNodeChildRemove(Node executingNode, AbstractNode newChildValue) : set(private AbstractNode Node.child) && withincode(public AbstractNode Node.remove(String)) && args(newChildValue) && this(executingNode);
     after(Node executingNode, AbstractNode newChildValue) : writeNodeChildRemove(executingNode, newChildValue) {
         System.out.println("Pointcut Node.set.child REMOVE");
@@ -240,7 +280,7 @@ privileged public aspect Visualization {
             executingNode.treeNode.removeFromParent();
     }
 
-    // Mark.remove
+    // Called whem Mark.remove method is executed
     pointcut markRemove(Mark executingMark) : execution(public AbstractNode Mark.remove(String)) && this(executingMark);
     after(Mark executingMark) returning(AbstractNode returnedNode) : markRemove(executingMark) {
         System.out.println("Pointcut Mark.remove");
@@ -252,23 +292,4 @@ privileged public aspect Visualization {
             executingMark.treeNode.removeFromParent();
     }
 
-    /*
-    TODO to remove if useless
-    // set brother Mark.remove
-    pointcut writeMarkBrotherRemove(AbstractNode executingNode, AbstractNode targetNode, AbstractNode newBrotherValue) : set(protected AbstractNode AbstractNode.brother) && withincode(public AbstractNode Mark.remove(String)) && args(newBrotherValue) && this(executingNode) && target(targetNode);
-    after(AbstractNode executingNode, AbstractNode targetNode, AbstractNode newBrotherValue) : writeMarkBrotherRemove(executingNode, targetNode, newBrotherValue) {
-        System.out.println("Pointcut Mark.set.brother REMOVE");
-
-        // Mark line 36
-    }
-
-    // set brother Node.remove
-    pointcut writeNodeBrotherRemove(AbstractNode executingNode, AbstractNode targetNode, AbstractNode newBrotherValue) : set(protected AbstractNode AbstractNode.brother) && withincode(public AbstractNode Node.remove(String)) &&  args(newBrotherValue) && this(executingNode) && target(targetNode);
-    after(AbstractNode executingNode, AbstractNode targetNode, AbstractNode newBrotherValue) : writeNodeBrotherRemove(executingNode, targetNode, newBrotherValue) {
-        System.out.println("Pointcut Node.set.brother REMOVE");
-
-        DefaultMutableTreeNode parent = (DefaultMutableTreeNode) executingNode.treeNode.getParent();
-
-        // Node line 78
-    }*/
 }
