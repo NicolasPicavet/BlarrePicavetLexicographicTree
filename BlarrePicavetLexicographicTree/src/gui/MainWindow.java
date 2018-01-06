@@ -10,13 +10,12 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.text.Collator;
 
 public class MainWindow extends JFrame {
 
 	private JTree tree;
 	private JTabbedPane tabPanel;
-	private JList list;
+	private JList<String> list;
 	private JTextField inputText;
 	private JButton addButton;
 	private JButton deleteButton;
@@ -79,9 +78,9 @@ public class MainWindow extends JFrame {
 			public void mouseClicked(MouseEvent e) {
 				String toSearch = inputText.getText();
 				if (lexicographicTree.contains(toSearch))
-					statusText.setText("\"" + toSearch + "\" found");
+					statusText.setText("\"" + toSearch + "\" found ("+lexicographicTree.elementsCount()+")");
 				else
-					statusText.setText("\"" + toSearch + "\" not found");
+					statusText.setText("\"" + toSearch + "\" not found ("+lexicographicTree.elementsCount()+")");
 			}
 		});
 		prefixButton.addMouseListener(new MouseAdapter() {
@@ -89,9 +88,9 @@ public class MainWindow extends JFrame {
 			public void mouseClicked(MouseEvent e) {
 				String toSearch = inputText.getText();
 				if (lexicographicTree.prefix(toSearch))
-					statusText.setText("\"" + toSearch + "\" found");
+					statusText.setText("\"" + toSearch + "\" found ("+lexicographicTree.elementsCount()+")");
 				else
-					statusText.setText("\"" + toSearch + "\" not found");
+					statusText.setText("\"" + toSearch + "\" not found ("+lexicographicTree.elementsCount()+")");
 			}
 		});
 		inputText.addKeyListener(new KeyAdapter() {
@@ -123,17 +122,17 @@ public class MainWindow extends JFrame {
 	public void addText() {
 		String toAdd = inputText.getText();
 		if (lexicographicTree.add(toAdd))
-			statusText.setText("\"" + toAdd + "\" added");
+			statusText.setText("\"" + toAdd + "\" added ("+lexicographicTree.elementsCount()+")");
 		else
-			statusText.setText("\"" + toAdd + "\" not added");
+			statusText.setText("\"" + toAdd + "\" not added ("+lexicographicTree.elementsCount()+")");
 	}
 
 	public void removeText() {
 		String toRemove = inputText.getText();
 		if (lexicographicTree.remove(toRemove))
-			statusText.setText("\"" + toRemove + "\" removed");
+			statusText.setText("\"" + toRemove + "\" removed ("+lexicographicTree.elementsCount()+")");
 		else
-			statusText.setText("\"" + toRemove + "\" not removed");
+			statusText.setText("\"" + toRemove + "\" not removed ("+lexicographicTree.elementsCount()+")");
 	}
 
 	private void reset() {
@@ -211,7 +210,7 @@ public class MainWindow extends JFrame {
 	public JComponent $$$getRootComponent$$$() {
 		return view;
 	}
-
+	
 	/**
 	 * "Open" dialog (based on:
 	 * https://stackoverflow.com/questions/3548140/how-to-open-and-save-using-java)
@@ -223,7 +222,7 @@ public class MainWindow extends JFrame {
 			if (rVal == JFileChooser.APPROVE_OPTION) {
 				reset();
 				if (lexicographicTree.load(c.getCurrentDirectory().toString() + "/" + c.getSelectedFile().getName()))
-					statusText.setText(c.getSelectedFile().getName() + " file loaded");
+					statusText.setText(c.getSelectedFile().getName() + " file loaded ("+lexicographicTree.elementsCount()+")");
 			}
 		}
 	}
@@ -237,7 +236,7 @@ public class MainWindow extends JFrame {
 			int rVal = c.showSaveDialog(MainWindow.this);
 			if (rVal == JFileChooser.APPROVE_OPTION) {
 				if (lexicographicTree.save(c.getCurrentDirectory().toString() + "/" + c.getSelectedFile().getName()))
-					statusText.setText(c.getSelectedFile().getName() + " file saved");
+					statusText.setText(c.getSelectedFile().getName() + " file saved ("+lexicographicTree.elementsCount()+")");
 			}
 		}
 	}
